@@ -1,0 +1,41 @@
+CREATE OR REFRESH MATERIALIZED VIEW results (
+  result_id INT COMMENT 'Primary key of the result row.',
+  race_id INT COMMENT 'Race. Join key to races.race_id.',
+  driver_id INT COMMENT 'Driver. Join key to drivers.driver_id.',
+  constructor_id INT COMMENT 'Constructor the driver raced for. Join key to constructors.constructor_id.',
+  car_number INT COMMENT 'Car number used in this race.',
+  grid_position INT COMMENT 'Starting grid position after penalties (1 = pole). 0 means the driver started from the pit lane.',
+  finish_position INT COMMENT 'Official finishing position. NULL if the driver was not classified (retired, disqualified, did not qualify, ...).',
+  position_text STRING COMMENT 'Finishing position as text: a number, or R = retired, D = disqualified, N = not classified, W = withdrawn, F = failed to qualify, E = excluded.',
+  position_order INT COMMENT 'Ordering of all entrants in the race result (1..N) including non-finishers. Use for sorting, not for wins or podiums.',
+  points DOUBLE COMMENT 'Drivers\' championship points scored in this race, under the scoring system of that season.',
+  laps_completed INT COMMENT 'Number of laps completed by the driver.',
+  race_time STRING COMMENT 'Race time of the winner (h:mm:ss.sss) or gap to the winner for other classified finishers (e.g. \'+5.478\'). NULL if not classified on time.',
+  race_time_ms BIGINT COMMENT 'Total race time in milliseconds. NULL for drivers who were lapped or did not finish.',
+  fastest_lap_number INT COMMENT 'Lap on which the driver set their fastest lap. NULL before 2004.',
+  fastest_lap_rank INT COMMENT 'Rank of the driver\'s fastest lap among all drivers in the race (1 = fastest lap of the race). NULL before 2004.',
+  fastest_lap_time STRING COMMENT 'Driver\'s fastest lap time as text (m:ss.sss).',
+  fastest_lap_speed_kph DOUBLE COMMENT 'Average speed of the driver\'s fastest lap in km/h.',
+  status_id INT COMMENT 'Finishing status. Join key to status.status_id.'
+)
+COMMENT 'Grand Prix race results, one row per driver per race'
+AS SELECT
+  CAST(resultId AS INT) AS result_id,
+  CAST(raceId AS INT) AS race_id,
+  CAST(driverId AS INT) AS driver_id,
+  CAST(constructorId AS INT) AS constructor_id,
+  CAST(number AS INT) AS car_number,
+  CAST(grid AS INT) AS grid_position,
+  CAST(position AS INT) AS finish_position,
+  positionText AS position_text,
+  CAST(positionOrder AS INT) AS position_order,
+  CAST(points AS DOUBLE) AS points,
+  CAST(laps AS INT) AS laps_completed,
+  time AS race_time,
+  CAST(milliseconds AS BIGINT) AS race_time_ms,
+  CAST(fastestLap AS INT) AS fastest_lap_number,
+  CAST(rank AS INT) AS fastest_lap_rank,
+  fastestLapTime AS fastest_lap_time,
+  CAST(fastestLapSpeed AS DOUBLE) AS fastest_lap_speed_kph,
+  CAST(statusId AS INT) AS status_id
+FROM read_files('${raw_path}/results.csv', format => 'csv', header => true, inferColumnTypes => false, nullValue => '\\N');

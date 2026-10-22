@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    f1_gold_pipeline:
+      name: f1genie_gold
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.f1_schema.name}
+      serverless: true
+      photon: true
+      channel: CURRENT
+      continuous: false
+      root_path: ../src/pipeline
+      libraries:
+        - glob:
+            include: ../src/pipeline/transformations/**
+      configuration:
+        # Folder the ingest task extracts the Kaggle CSVs into
+        raw_path: ${resources.volumes.raw.volume_path}/kaggle

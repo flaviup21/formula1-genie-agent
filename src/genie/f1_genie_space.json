@@ -1,0 +1,585 @@
+{
+  "benchmarks": {
+    "questions": [
+      {
+        "answer": [
+          {
+            "content": [
+              "SELECT driver_name, MEASURE(wins) AS wins, MEASURE(race_starts) AS race_starts, ROUND(MEASURE(win_rate) * 100, 1) AS win_rate_pct FROM ${catalog}.${schema}.race_performance_metrics WHERE season = 2023 AND driver_name = 'Max Verstappen' GROUP BY ALL"
+            ],
+            "format": "SQL"
+          }
+        ],
+        "evaluation_note": [
+          "Expected: 19 wins from 22 starts, ~86.4%."
+        ],
+        "id": "db6888edcf824c888abef3ad94a85873",
+        "question": [
+          "What was Max Verstappen's win rate in 2023?"
+        ]
+      },
+      {
+        "answer": [
+          {
+            "content": [
+              "SELECT constructor_name, MEASURE(total_points) AS total_points FROM ${catalog}.${schema}.race_performance_metrics WHERE season BETWEEN 2014 AND 2020 GROUP BY ALL ORDER BY total_points DESC LIMIT 3"
+            ],
+            "format": "SQL"
+          }
+        ],
+        "evaluation_note": [
+          "Expected: Mercedes (4804), Ferrari (2770), Red Bull (2583). Grand Prix points only, sprints excluded."
+        ],
+        "id": "a7ed7de980204ef180a393c75ab07406",
+        "question": [
+          "Which three constructors scored the most points during the 2014-2020 hybrid era?"
+        ]
+      },
+      {
+        "answer": [
+          {
+            "content": [
+              "SELECT COUNT(*) AS races FROM ${catalog}.${schema}.races WHERE year = 2024"
+            ],
+            "format": "SQL"
+          }
+        ],
+        "evaluation_note": [
+          "Expected: 24."
+        ],
+        "id": "739ff7fdd7cd457ea040d5371161728f",
+        "question": [
+          "How many Grand Prix races were held in 2024?"
+        ]
+      },
+      {
+        "answer": [
+          {
+            "content": [
+              "SELECT constructors.constructor_name, constructor_standings.points FROM ${catalog}.${schema}.constructor_standings constructor_standings JOIN ${catalog}.${schema}.races races ON constructor_standings.race_id = races.race_id JOIN ${catalog}.${schema}.constructors constructors ON constructor_standings.constructor_id = constructors.constructor_id WHERE races.year = 2023 AND races.round = (SELECT MAX(r.round) FROM ${catalog}.${schema}.races r WHERE r.year = 2023) AND constructor_standings.position = 1"
+            ],
+            "format": "SQL"
+          }
+        ],
+        "evaluation_note": [
+          "Expected: Red Bull with 860 points (final standings, last round of 2023)."
+        ],
+        "id": "6be300263db940558815e43eec1b94cb",
+        "question": [
+          "Which team won the 2023 constructors' championship and with how many points?"
+        ]
+      },
+      {
+        "answer": [
+          {
+            "content": [
+              "SELECT driver_name, MEASURE(podiums) AS podiums FROM ${catalog}.${schema}.race_performance_metrics GROUP BY ALL ORDER BY podiums DESC LIMIT 1"
+            ],
+            "format": "SQL"
+          }
+        ],
+        "evaluation_note": [
+          "Expected: Lewis Hamilton with 208 Grand Prix podiums."
+        ],
+        "id": "5a77e101a48247cb8402472f1574f16a",
+        "question": [
+          "Which driver has the most podium finishes in F1 history?"
+        ]
+      }
+    ]
+  },
+  "config": {
+    "sample_questions": [
+      {
+        "id": "1faea2d9bf3f47e69bb2d925349d4157",
+        "question": [
+          "Which drivers had the fastest average pit stops in 2024?"
+        ]
+      },
+      {
+        "id": "31a2753e44324a6cb86add689a258a54",
+        "question": [
+          "Who won the drivers' championship every year since 2010?"
+        ]
+      },
+      {
+        "id": "64087a96a4864ed0a99f3606079cbb8c",
+        "question": [
+          "Who are the top 10 drivers by career wins?"
+        ]
+      },
+      {
+        "id": "8783e2b0e153404bb4a52087495f4605",
+        "question": [
+          "How has the race finish rate changed by decade?"
+        ]
+      },
+      {
+        "id": "df483f720d5b4d5f8c98944921420969",
+        "question": [
+          "Which constructor scored the most points each season since 2020?"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "column_configs": [
+          {
+            "column_name": "constructor_standings_id",
+            "exclude": true
+          },
+          {
+            "column_name": "points",
+            "description": [
+              "Cumulative championship points after this race"
+            ]
+          },
+          {
+            "column_name": "position",
+            "description": [
+              "Championship position after this race"
+            ]
+          }
+        ],
+        "identifier": "${catalog}.${schema}.constructor_standings"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "constructor_name",
+            "description": [
+              "Team name"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true,
+            "synonyms": [
+              "team"
+            ]
+          },
+          {
+            "column_name": "nationality",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "url",
+            "exclude": true
+          }
+        ],
+        "identifier": "${catalog}.${schema}.constructors"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "driver_standings_id",
+            "exclude": true
+          },
+          {
+            "column_name": "points",
+            "description": [
+              "Cumulative championship points after this race"
+            ]
+          },
+          {
+            "column_name": "position",
+            "description": [
+              "Championship position after this race"
+            ]
+          }
+        ],
+        "identifier": "${catalog}.${schema}.driver_standings"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "driver_code",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "driver_name",
+            "description": [
+              "Full driver name (forename + surname)"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true,
+            "synonyms": [
+              "driver",
+              "pilot"
+            ]
+          },
+          {
+            "column_name": "nationality",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "url",
+            "exclude": true
+          }
+        ],
+        "identifier": "${catalog}.${schema}.drivers"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "duration_ms",
+            "description": [
+              "Pit-lane time in milliseconds"
+            ]
+          },
+          {
+            "column_name": "time_of_day",
+            "description": [
+              "Local wall-clock time of the stop"
+            ]
+          }
+        ],
+        "identifier": "${catalog}.${schema}.pit_stops"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "qualify_id",
+            "exclude": true
+          },
+          {
+            "column_name": "qualifying_position",
+            "description": [
+              "Final qualifying (grid-deciding) position; 1 = pole position"
+            ],
+            "synonyms": [
+              "pole"
+            ]
+          }
+        ],
+        "identifier": "${catalog}.${schema}.qualifying"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "circuit_city",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "circuit_country",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "circuit_name",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "constructor_name",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "constructor_nationality",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "driver_name",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "driver_nationality",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "era",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "finish_status",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "race_name",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "result_category",
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          }
+        ],
+        "identifier": "${catalog}.${schema}.race_performance_metrics"
+      },
+      {
+        "column_configs": [
+          {
+            "column_name": "race_name",
+            "description": [
+              "Grand Prix name"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true,
+            "synonyms": [
+              "grand prix",
+              "gp"
+            ]
+          },
+          {
+            "column_name": "url",
+            "exclude": true
+          }
+        ],
+        "identifier": "${catalog}.${schema}.races"
+      }
+    ],
+    "volumes": ${document_volumes}
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {
+        "id": "097cbc93189b4146ba2680d16f94743b",
+        "question": [
+          "Who has the most pole positions?"
+        ],
+        "sql": [
+          "SELECT drivers.driver_name, COUNT(*) AS pole_positions FROM ${catalog}.${schema}.qualifying qualifying JOIN ${catalog}.${schema}.drivers drivers ON qualifying.driver_id = drivers.driver_id WHERE qualifying.qualifying_position = 1 GROUP BY drivers.driver_name ORDER BY pole_positions DESC LIMIT 10"
+        ],
+        "usage_guidance": [
+          "Pole position = qualifying_position = 1 in qualifying (1994+ only)."
+        ]
+      },
+      {
+        "id": "2135cf27186541bea8e67b6f79c4e3c6",
+        "question": [
+          "Reliability / finish rate by decade"
+        ],
+        "sql": [
+          "SELECT decade, MEASURE(race_starts) AS race_starts, ROUND(MEASURE(finish_rate) * 100, 1) AS finish_rate_pct FROM ${catalog}.${schema}.race_performance_metrics GROUP BY ALL ORDER BY decade"
+        ],
+        "usage_guidance": [
+          "Use finish_rate measure for reliability / DNF questions (DNF rate = 1 - finish_rate)."
+        ]
+      },
+      {
+        "id": "2947d95316ca40bba72b14083fae785a",
+        "question": [
+          "Who was the drivers' world champion in each season?"
+        ],
+        "sql": [
+          "WITH final_round AS (SELECT races.year, MAX(races.round) AS last_round FROM ${catalog}.${schema}.races races JOIN ${catalog}.${schema}.driver_standings driver_standings ON driver_standings.race_id = races.race_id GROUP BY races.year) SELECT races.year, drivers.driver_name, driver_standings.points, driver_standings.wins FROM ${catalog}.${schema}.driver_standings driver_standings JOIN ${catalog}.${schema}.races races ON driver_standings.race_id = races.race_id JOIN final_round ON final_round.year = races.year AND final_round.last_round = races.round JOIN ${catalog}.${schema}.drivers drivers ON driver_standings.driver_id = drivers.driver_id WHERE driver_standings.position = 1 ORDER BY races.year DESC"
+        ],
+        "usage_guidance": [
+          "Championship winners come from driver_standings at the LAST round of each season, position = 1. Same pattern applies to constructor_standings."
+        ]
+      },
+      {
+        "id": "827014221d41471193a5e53fd7f2558b",
+        "question": [
+          "Average pit stop duration by driver in 2024"
+        ],
+        "sql": [
+          "SELECT drivers.driver_name, COUNT(*) AS pit_stops, ROUND(AVG(pit_stops.duration_ms) / 1000, 3) AS avg_pit_stop_seconds FROM ${catalog}.${schema}.pit_stops pit_stops JOIN ${catalog}.${schema}.races races ON pit_stops.race_id = races.race_id JOIN ${catalog}.${schema}.drivers drivers ON pit_stops.driver_id = drivers.driver_id WHERE races.year = 2024 AND pit_stops.duration_ms < 60000 GROUP BY drivers.driver_name HAVING COUNT(*) >= 10 ORDER BY avg_pit_stop_seconds ASC LIMIT 10"
+        ],
+        "usage_guidance": [
+          "Pit stop duration_ms is pit-lane time (entry to exit). Exclude stops >= 60s (red-flag / repairs)."
+        ]
+      },
+      {
+        "id": "bf5035f6897d40c7b5a185f814a771f0",
+        "question": [
+          "Top 10 drivers by number of wins, with win rate"
+        ],
+        "sql": [
+          "SELECT driver_name, MEASURE(wins) AS wins, MEASURE(race_starts) AS race_starts, ROUND(MEASURE(win_rate) * 100, 1) AS win_rate_pct FROM ${catalog}.${schema}.race_performance_metrics GROUP BY ALL ORDER BY wins DESC LIMIT 10"
+        ],
+        "usage_guidance": [
+          "Use for all-time driver rankings on wins / win rate."
+        ]
+      },
+      {
+        "id": "c6104428758547cfb4cc3f4ebbddcc1e",
+        "question": [
+          "Constructor points and wins per season for the last 5 seasons"
+        ],
+        "sql": [
+          "SELECT season, constructor_name, MEASURE(total_points) AS total_points, MEASURE(wins) AS wins FROM ${catalog}.${schema}.race_performance_metrics WHERE season >= (SELECT MAX(year) - 4 FROM ${catalog}.${schema}.races) GROUP BY ALL ORDER BY season, total_points DESC"
+        ],
+        "usage_guidance": [
+          "Use for constructor (team) comparisons across seasons."
+        ]
+      }
+    ],
+    "join_specs": [
+      {
+        "id": "0675006964b2493498eec492271dc95f",
+        "left": {
+          "alias": "qualifying",
+          "identifier": "${catalog}.${schema}.qualifying"
+        },
+        "right": {
+          "alias": "races",
+          "identifier": "${catalog}.${schema}.races"
+        },
+        "sql": [
+          "`qualifying`.`race_id` = `races`.`race_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "2d268ebcbdac4ad7926dd488047e0402",
+        "left": {
+          "alias": "qualifying",
+          "identifier": "${catalog}.${schema}.qualifying"
+        },
+        "right": {
+          "alias": "drivers",
+          "identifier": "${catalog}.${schema}.drivers"
+        },
+        "sql": [
+          "`qualifying`.`driver_id` = `drivers`.`driver_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "411af451abb54464aab4e576e299fc84",
+        "left": {
+          "alias": "qualifying",
+          "identifier": "${catalog}.${schema}.qualifying"
+        },
+        "right": {
+          "alias": "constructors",
+          "identifier": "${catalog}.${schema}.constructors"
+        },
+        "sql": [
+          "`qualifying`.`constructor_id` = `constructors`.`constructor_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "59f2c171ad6a48c39d28e22be2783f7d",
+        "left": {
+          "alias": "driver_standings",
+          "identifier": "${catalog}.${schema}.driver_standings"
+        },
+        "right": {
+          "alias": "races",
+          "identifier": "${catalog}.${schema}.races"
+        },
+        "sql": [
+          "`driver_standings`.`race_id` = `races`.`race_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "7a2d363d80114e9c8971d32b49207a7d",
+        "left": {
+          "alias": "constructor_standings",
+          "identifier": "${catalog}.${schema}.constructor_standings"
+        },
+        "right": {
+          "alias": "races",
+          "identifier": "${catalog}.${schema}.races"
+        },
+        "sql": [
+          "`constructor_standings`.`race_id` = `races`.`race_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "8115f7994d9340cc9317ba1fb1c60686",
+        "left": {
+          "alias": "constructor_standings",
+          "identifier": "${catalog}.${schema}.constructor_standings"
+        },
+        "right": {
+          "alias": "constructors",
+          "identifier": "${catalog}.${schema}.constructors"
+        },
+        "sql": [
+          "`constructor_standings`.`constructor_id` = `constructors`.`constructor_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "a8c26267a6484a62ac92973efd2a5fde",
+        "left": {
+          "alias": "driver_standings",
+          "identifier": "${catalog}.${schema}.driver_standings"
+        },
+        "right": {
+          "alias": "drivers",
+          "identifier": "${catalog}.${schema}.drivers"
+        },
+        "sql": [
+          "`driver_standings`.`driver_id` = `drivers`.`driver_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "abdc0b51a4b54a3fbe30061ac62c8f4e",
+        "left": {
+          "alias": "pit_stops",
+          "identifier": "${catalog}.${schema}.pit_stops"
+        },
+        "right": {
+          "alias": "drivers",
+          "identifier": "${catalog}.${schema}.drivers"
+        },
+        "sql": [
+          "`pit_stops`.`driver_id` = `drivers`.`driver_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "bd5cedb8cba0407aa6b5e5feaa9e0b26",
+        "left": {
+          "alias": "pit_stops",
+          "identifier": "${catalog}.${schema}.pit_stops"
+        },
+        "right": {
+          "alias": "races",
+          "identifier": "${catalog}.${schema}.races"
+        },
+        "sql": [
+          "`pit_stops`.`race_id` = `races`.`race_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      }
+    ],
+    "text_instructions": [
+      {
+        "content": [
+          "## PURPOSE\n",
+          "- Formula 1 analytics assistant for fans, analysts and strategists covering every World Championship season from 1950 to the current season.\n",
+          "- Answers questions about drivers, constructors (teams), races, circuits, championships, qualifying and pit stops.\n",
+          "\n",
+          "## DISAMBIGUATION\n",
+          "- 'Team' means constructor. 'Season' and 'year' are the same.\n",
+          "- 'Champion' / 'title' means the final championship standing (position 1 after the last round of the season), not the most race wins.\n",
+          "- 'Points' means Grand Prix points as awarded at the time; scoring systems changed over the decades, so warn when comparing points across eras and suggest wins / win rate instead.\n",
+          "- If a driver or team name is ambiguous (e.g. 'Schumacher', 'Lotus'), list the options and ask which one is meant.\n",
+          "\n",
+          "## DATA QUALITY NOTES\n",
+          "- The current season may still be in progress; say so when it appears in a result.\n",
+          "- Qualifying and pit stop data start in 1994, lap times in 1982, sprint races in 2021; earlier seasons cannot answer those questions.\n",
+          "- Race metrics in race_performance_metrics exclude sprint races.\n",
+          "- Pit stop duration is total pit-lane time, not stationary time.\n",
+          "\n",
+          "## Instructions you must follow when providing summaries\n",
+          "- Always state the season range the answer covers.\n",
+          "- Round percentages to one decimal and pit stop times to three decimals (seconds).\n",
+          "- Prefer a short ranked table for top-N answers, followed by one sentence of insight."
+        ],
+        "id": "7677b816eaf34f6ab91d441c5901ebfb"
+      }
+    ]
+  },
+  "version": 2
+}

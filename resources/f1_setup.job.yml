@@ -1,0 +1,68 @@
+resources:
+  jobs:
+    f1_setup_job:
+      name: f1genie_setup
+      description: Set up and refresh everything - download the Kaggle F1 data and FIA F1 regulations, rebuild the gold tables and the race_performance_metrics metric view, and create or update the Genie agent.
+
+      schedule:
+        # Monthly, 1st of the month 06:00 UTC (paused automatically in development mode)
+        quartz_cron_expression: "0 0 6 1 * ?"
+        timezone_id: UTC
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${resources.schemas.f1_schema.name}
+
+      tasks:
+        - task_key: download_kaggle_csv
+          notebook_task:
+            notebook_path: ../src/jobs/download_kaggle.py
+            base_parameters:
+              dataset: ${var.kaggle_dataset}
+
+        - task_key: download_fia_regulations
+          notebook_task:
+            notebook_path: ../src/jobs/download_fia_regulations.py
+            base_parameters:
+              listing_url: ${var.fia_regulations_url}
+              min_year: ${var.fia_min_year}
+
+        - task_key: refresh_gold_tables
+          depends_on:
+            - task_key: download_kaggle_csv
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.f1_gold_pipeline.id}
+
+        - task_key: create_metric_view
+          depends_on:
+            - task_key: refresh_gold_tables
+          notebook_task:
+            notebook_path: ../src/jobs/create_metric_view.py
+            base_parameters:
+              template_path: ${workspace.file_path}/src/metric_views/race_performance_metrics.yaml
+
+        # Created by the job rather than as a bundle resource: the Genie API needs the tables to exist,
+        # so a single deploy + run sets up everything.
+        - task_key: deploy_genie_space
+          depends_on:
+            - task_key: create_metric_view
+            - task_key: download_fia_regulations
+          notebook_task:
+            notebook_path: ../src/jobs/deploy_genie_space.py
+            base_parameters:
+              template_path: ${workspace.file_path}/src/genie/f1_genie_space.json
+              title: ${var.genie_title}
+              warehouse_id: ${var.warehouse_id}
+              parent_path: ${var.genie_parent_path}
+              document_volumes: ${var.genie_document_volumes}
+
+        - task_key: apply_uc_tags
+          depends_on:
+            - task_key: create_metric_view
+            - task_key: download_fia_regulations
+          notebook_task:
+            notebook_path: ../src/jobs/apply_uc_tags.py
+            base_parameters:
+              tag: f1genie

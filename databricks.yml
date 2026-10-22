@@ -1,0 +1,74 @@
+# Declarative Automation Bundle: f1genie (Formula 1 Race Analytics with Genie)
+#
+# Ingests the Kaggle "jtrotman/formula-1-race-data" CSVs and the FIA Formula 1
+# regulation PDFs, builds the gold tables with a Lakeflow Spark Declarative
+# Pipeline, publishes the race_performance_metrics metric view and creates the
+# "Formula 1 Race Analytics" Genie agent on top of it (deploy_genie_space job task).
+bundle:
+  name: f1genie
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for all F1 assets
+    default: formula1
+  schema:
+    description: Schema (created by this bundle) holding the volumes, gold tables and metric view. Prefixed with dev_<user>_ in development mode.
+    default: f1genie
+  warehouse_id:
+    description: SQL warehouse used by the Genie agent
+    default: 38cd347c5cbae406 # Serverless Starter Warehouse
+  kaggle_dataset:
+    description: Kaggle dataset slug (owner/dataset)
+    default: jtrotman/formula-1-race-data
+  fia_regulations_url:
+    description: FIA regulation listing page (category 110 = Formula 1)
+    default: https://www.fia.com/regulation/category/110
+  fia_min_year:
+    description: Only download FIA regulation PDFs for this season or later
+    default: "2026"
+  genie_document_volumes:
+    description: >-
+      JSON array of volumes the Genie agent searches (FIA regulation PDFs). Set to "[]" on workspaces
+      with the Usage Policy / Serverless Access Control preview, where Genie volume indexing is unavailable.
+    default: '[{"path": "${resources.volumes.documents.volume_path}/"}]'
+  genie_parent_path:
+    description: Workspace folder of the Genie agent
+    default: /Workspace/Users/${workspace.current_user.userName}/formula1
+  genie_title:
+    description: Title of the Genie agent created and updated by the deploy_genie_space task
+    default: Formula 1 Race Analytics
+
+# Applied to every resource type that supports tags (jobs, pipelines);
+# Unity Catalog objects are tagged by the apply_uc_tags job task.
+presets:
+  tags:
+    f1genie: ""
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://fe-sandbox-flobricksaws.cloud.databricks.com
+      profile: fe-sandbox-flobricksaws
+    variables:
+      # fe-sandbox-flobricksaws has the usage policy preview enabled -> Genie volume indexing unavailable
+      genie_document_volumes: "[]"
+      # Same prefix development mode puts on the job and pipeline names
+      genie_title: "[dev ${workspace.current_user.short_name}] Formula 1 Race Analytics"
+
+  prod:
+    mode: production
+    workspace:
+      host: https://fe-sandbox-flobricksaws.cloud.databricks.com
+      profile: fe-sandbox-flobricksaws
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      # fe-sandbox-flobricksaws has the usage policy preview enabled -> Genie volume indexing unavailable
+      genie_document_volumes: "[]"
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE

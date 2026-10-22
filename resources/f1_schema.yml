@@ -1,0 +1,23 @@
+resources:
+  schemas:
+    f1_schema:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: Formula 1 statistics for Genie (Kaggle jtrotman/formula-1-race-data + FIA F1 regulations). Managed by the f1genie bundle.
+      properties:
+        f1genie: ""
+
+  volumes:
+    raw:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.f1_schema.name}
+      name: raw
+      volume_type: MANAGED
+      comment: Raw source files (Kaggle F1 CSVs)
+
+    documents:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.f1_schema.name}
+      name: documents
+      volume_type: MANAGED
+      comment: FIA Formula 1 regulation PDFs

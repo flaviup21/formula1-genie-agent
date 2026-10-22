@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1190" height="226" viewBox="0 0 1190 226" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" role="img" aria-label="Architecture: Kaggle and FIA sources, Lakeflow pipeline, metric view, Genie agent">
+  <title>Formula 1 Race Analytics on Databricks: architecture</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+    <clipPath id="c1"><rect x="30" y="66" width="245" height="130" rx="12"/></clipPath>
+    <clipPath id="c2"><rect x="325" y="66" width="245" height="130" rx="12"/></clipPath>
+    <clipPath id="c3"><rect x="620" y="66" width="245" height="130" rx="12"/></clipPath>
+  </defs>
+
+  <!-- Light surface so the labels stay readable in GitHub dark mode -->
+  <rect width="1190" height="226" rx="16" fill="#fcfcfb"/>
+
+  <!-- 1 · Sources -->
+  <circle cx="43" cy="40" r="13" fill="#eb6834"/>
+  <text x="43" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">1</text>
+  <text x="64" y="45" font-size="13" font-weight="700" letter-spacing="1" fill="#52514e">SOURCES</text>
+  <g clip-path="url(#c1)">
+    <rect x="30" y="66" width="245" height="130" fill="#fdeee7"/>
+    <rect x="30" y="66" width="245" height="5" fill="#eb6834"/>
+  </g>
+  <text x="52" y="111" font-size="21" font-weight="700" fill="#0b0b0b">Kaggle + FIA</text>
+  <text x="52" y="141" font-size="14.5" fill="#52514e">Race data CSVs since 1950</text>
+  <text x="52" y="163" font-size="14.5" fill="#52514e">F1 regulation PDFs</text>
+
+  <line x1="283" y1="131" x2="317" y2="131" stroke="#898781" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 2 · Transform -->
+  <circle cx="338" cy="40" r="13" fill="#1baf7a"/>
+  <text x="338" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">2</text>
+  <text x="359" y="45" font-size="13" font-weight="700" letter-spacing="1" fill="#52514e">INGEST &amp; TRANSFORM</text>
+  <g clip-path="url(#c2)">
+    <rect x="325" y="66" width="245" height="130" fill="#e6f6ef"/>
+    <rect x="325" y="66" width="245" height="5" fill="#1baf7a"/>
+  </g>
+  <text x="347" y="111" font-size="21" font-weight="700" fill="#0b0b0b">Lakeflow pipeline</text>
+  <text x="347" y="141" font-size="14.5" fill="#52514e">15 gold materialized views</text>
+  <text x="347" y="163" font-size="14.5" fill="#52514e">Metadata included</text>
+
+  <line x1="578" y1="131" x2="612" y2="131" stroke="#898781" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 3 · Define -->
+  <circle cx="633" cy="40" r="13" fill="#6250d6"/>
+  <text x="633" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">3</text>
+  <text x="654" y="45" font-size="13" font-weight="700" letter-spacing="1" fill="#52514e">SEMANTICS</text>
+  <g clip-path="url(#c3)">
+    <rect x="620" y="66" width="245" height="130" fill="#eeecfa"/>
+    <rect x="620" y="66" width="245" height="5" fill="#6250d6"/>
+  </g>
+  <text x="642" y="111" font-size="21" font-weight="700" fill="#0b0b0b">Metric view</text>
+  <text x="642" y="141" font-size="12.5" font-family="SF Mono, Menlo, Consolas, monospace" fill="#52514e">race_performance_metrics</text>
+  <text x="642" y="163" font-size="14.5" fill="#52514e">wins, podiums, finish rate</text>
+
+  <line x1="873" y1="131" x2="907" y2="131" stroke="#898781" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 4 · Ask -->
+  <circle cx="928" cy="40" r="13" fill="#2a78d6"/>
+  <text x="928" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">4</text>
+  <text x="949" y="45" font-size="13" font-weight="700" letter-spacing="1" fill="#52514e">ASK</text>
+  <rect x="915" y="66" width="245" height="130" rx="12" fill="#2a78d6"/>
+  <text x="937" y="111" font-size="21" font-weight="700" fill="#fff">Genie agent</text>
+  <text x="937" y="141" font-size="14.5" fill="#eaf2fc">“Who won the title every</text>
+  <text x="937" y="163" font-size="14.5" fill="#eaf2fc">year since 2010?”</text>
+</svg>

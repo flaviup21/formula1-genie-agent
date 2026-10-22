@@ -1,0 +1,128 @@
+# Metric view template for race_performance_metrics.
+# ${catalog} / ${schema} are substituted by src/jobs/create_metric_view.py at run time.
+version: 1.1
+comment: |-
+  Governed Formula 1 race performance KPIs (semantic model).
+  Grain of the source: one row per driver per World Championship Grand Prix (1950 to the current season, ~27.6K rows), from ${catalog}.${schema}.race_results_enriched.
+  Sprint races are NOT included; points are Grand Prix points as awarded under the scoring system of the time (systems changed in 1960, 1991, 2003, 2010 etc.), so compare wins / win rate rather than raw points across eras.
+  1950-1960 seasons include the Indianapolis 500. The latest season may still be in progress.
+  Joined to ${catalog}.${schema}.drivers (dim_driver) for driver career attributes such as world titles.
+  Source data: Kaggle jtrotman/formula-1-race-data.
+source: ${catalog}.${schema}.race_results_enriched
+joins:
+- name: dim_driver
+  source: ${catalog}.${schema}.drivers
+  'on': source.driver_id = dim_driver.driver_id
+dimensions:
+- name: season
+  expr: source.year
+  comment: Championship season (calendar year), 1950 to current.
+- name: decade
+  expr: CONCAT(CAST(FLOOR(source.year / 10) * 10 AS STRING), 's')
+  comment: Decade of the season as text, e.g. '1980s', '2010s'.
+- name: era
+  expr: |-
+    CASE
+      WHEN source.year >= 2022 THEN 'Ground-effect'
+      WHEN source.year >= 2014 THEN 'Turbo-hybrid'
+      WHEN source.year >= 2006 THEN 'V8'
+      WHEN source.year >= 1989 THEN 'Naturally aspirated'
+      WHEN source.year >= 1977 THEN 'First turbo'
+      ELSE 'Classic'
+    END
+  comment: 'Technical regulation era. Values (exact): ''Classic'' (1950-1976), ''First turbo'' (1977-1988), ''Naturally aspirated'' (1989-2005), ''V8'' (2006-2013), ''Turbo-hybrid'' (2014-2021), ''Ground-effect'' (2022+).'
+- name: round
+  expr: source.round
+  comment: Round number of the race within its season (1 = season opener).
+- name: race_name
+  expr: source.race_name
+  comment: Grand Prix name, e.g. 'Monaco Grand Prix', 'British Grand Prix'. The same name recurs every season; combine with season to identify a single race.
+- name: race_date
+  expr: source.race_date
+  comment: Date the Grand Prix was held.
+- name: circuit_name
+  expr: source.circuit_name
+  comment: Name of the track, e.g. 'Circuit de Monaco', 'Autodromo Nazionale di Monza'.
+- name: circuit_city
+  expr: source.circuit_city
+  comment: City / locality of the circuit, e.g. 'Monza', 'Silverstone', 'Melbourne'.
+- name: circuit_country
+  expr: source.circuit_country
+  comment: Country where the race was held (host country). Not the driver's nationality.
+- name: driver_name
+  expr: source.driver_name
+  comment: Full driver name, e.g. 'Lewis Hamilton', 'Max Verstappen'.
+- name: driver_code
+  expr: source.driver_code
+  comment: Three-letter timing-screen abbreviation (e.g. HAM, VER); mostly NULL for historic drivers.
+- name: driver_nationality
+  expr: source.driver_nationality
+  comment: Nationality of the driver as an adjective, e.g. 'British', 'Dutch'.
+- name: driver_age_at_race
+  expr: CAST(FLOOR(MONTHS_BETWEEN(source.race_date, source.date_of_birth) / 12) AS INT)
+  comment: Driver's age in whole years on race day. Use for 'youngest winner' / 'oldest driver' questions.
+- name: driver_world_titles
+  expr: dim_driver.world_titles
+  comment: Total Drivers' World Championships the driver has won in their whole career (completed seasons only). A driver attribute, not a per-race value; filter > 0 for world champions.
+- name: is_world_champion
+  expr: dim_driver.world_titles > 0
+  comment: TRUE if the driver has won at least one Drivers' World Championship in their career.
+- name: driver_is_active
+  expr: dim_driver.is_active
+  comment: TRUE if the driver raced in the latest season in the data (current grid).
+- name: driver_first_season
+  expr: dim_driver.first_season
+  comment: Season of the driver's first Grand Prix start.
+- name: constructor_name
+  expr: source.constructor_name
+  comment: 'Team / constructor the driver raced for in this race, e.g. ''Ferrari'', ''McLaren'', ''Red Bull''. Note: renamed teams appear under their name at the time (e.g. Force India vs Racing Point vs Aston Martin).'
+- name: constructor_nationality
+  expr: source.constructor_nationality
+  comment: Nationality of the constructor, e.g. 'Italian' (Ferrari), 'British' (McLaren), 'Austrian' (Red Bull).
+- name: grid_position
+  expr: source.grid_position
+  comment: Starting grid position (1 = pole). 0 means the driver started from the pit lane.
+- name: finish_position
+  expr: source.finish_position
+  comment: Official classified finishing position; NULL if the driver was not classified (retired / DNF / DSQ).
+- name: finish_status
+  expr: source.status
+  comment: 'Raw finishing status: ''Finished'', ''+1 Lap'', ''+2 Laps'', or the retirement reason such as ''Engine'', ''Collision'', ''Gearbox'', ''Accident'', ''Disqualified''.'
+- name: result_category
+  expr: |-
+    CASE
+      WHEN source.is_win THEN 'Win'
+      WHEN source.is_podium THEN 'Podium'
+      WHEN source.points > 0 THEN 'Points finish'
+      WHEN source.is_classified_finish THEN 'Finished, no points'
+      ELSE 'DNF'
+    END
+  comment: 'Bucketed outcome of a race start. Values (exact): ''Win'' (P1), ''Podium'' (P2-P3 only), ''Points finish'' (outside podium, scored points), ''Finished, no points'', ''DNF'' (did not finish / disqualified / not classified).'
+measures:
+- name: race_starts
+  expr: COUNT(1)
+  comment: Number of race entries (one per driver per Grand Prix). For a driver = career starts; for a team = car-entries (usually 2 per race).
+- name: races_held
+  expr: COUNT(DISTINCT source.race_id)
+  comment: Number of distinct Grands Prix. Use for 'how many races' questions (not race_starts).
+- name: unique_drivers
+  expr: COUNT(DISTINCT source.driver_id)
+  comment: Number of distinct drivers who started at least one race in the selection.
+- name: total_points
+  expr: SUM(source.points)
+  comment: Championship points scored in Grand Prix races (sprints excluded), as awarded under the scoring system of the time. Not comparable across eras; championship totals may differ slightly because of dropped-score rules in early decades and sprint points since 2021.
+- name: wins
+  expr: COUNT(1) FILTER (WHERE source.is_win)
+  comment: Number of Grand Prix victories (finish position 1).
+- name: podiums
+  expr: COUNT(1) FILTER (WHERE source.is_podium)
+  comment: Number of top-3 finishes (positions 1, 2 or 3).
+- name: win_rate
+  expr: MEASURE(wins) / NULLIF(MEASURE(race_starts), 0)
+  comment: Wins divided by race starts, as a ratio 0-1 (0.25 = 25%). Era-neutral way to compare dominance.
+- name: finish_rate
+  expr: COUNT(1) FILTER (WHERE source.is_classified_finish) / NULLIF(COUNT(1), 0)
+  comment: Share of starts that reached a classified finish (status 'Finished' or '+N Laps'), ratio 0-1. Reliability KPI; DNF rate = 1 - finish_rate.
+- name: avg_positions_gained
+  expr: AVG(source.positions_gained)
+  comment: Average of grid position minus finish position per start (positive = places gained in the race). Excludes pit-lane starts and non-classified results.
