@@ -34,21 +34,23 @@ os.makedirs(target_dir, exist_ok=True)
 # COMMAND ----------
 
 # Public datasets can be downloaded anonymously; the API redirects to a signed storage URL.
-url = f"https://www.kaggle.com/api/v1/datasets/download/{dataset}"
-req = urllib.request.Request(url, headers={"User-Agent": "databricks-f1genie"})
-with urllib.request.urlopen(req, timeout=300) as resp:
-    payload = resp.read()
-print(f"Downloaded {len(payload) / 1e6:.1f} MB from {url}")
+# Files are fetched one by one: right after a dataset update Kaggle may not have built the
+# full archive yet (/datasets/download/{dataset} returns 404 "No gcs url found"), while the
+# individual files are already available.
+for name in sorted(EXPECTED_FILES):
+    url = f"https://www.kaggle.com/api/v1/datasets/download/{dataset}/{name}"
+    req = urllib.request.Request(url, headers={"User-Agent": "databricks-f1genie"})
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        payload = resp.read()
 
-with zipfile.ZipFile(io.BytesIO(payload)) as zf:
-    csv_members = [m for m in zf.namelist() if m.lower().endswith(".csv")]
-    missing = EXPECTED_FILES - {os.path.basename(m) for m in csv_members}
-    if missing:
-        raise RuntimeError(f"Kaggle archive is missing expected files: {sorted(missing)}")
-    for member in csv_members:
-        dest = os.path.join(target_dir, os.path.basename(member))
-        with zf.open(member) as src, open(dest, "wb") as out:
-            out.write(src.read())
-        print(f"  {dest}")
+    # Kaggle may serve large single files zip-compressed
+    if payload[:4] == b"PK\x03\x04":
+        with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+            payload = zf.read(zf.namelist()[0])
 
-dbutils.notebook.exit(f"Extracted {len(csv_members)} CSV files to {target_dir}")
+    dest = os.path.join(target_dir, name)
+    with open(dest, "wb") as out:
+        out.write(payload)
+    print(f"  {dest} ({len(payload) / 1e6:.1f} MB)")
+
+dbutils.notebook.exit(f"Downloaded {len(EXPECTED_FILES)} CSV files to {target_dir}")

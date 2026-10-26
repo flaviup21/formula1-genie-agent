@@ -19,7 +19,7 @@ variables:
     default: f1genie
   warehouse_id:
     description: SQL warehouse used by the Genie agent
-    default: 38cd347c5cbae406 # Serverless Starter Warehouse
+    default: b97da6a5ec7c49f2 # Serverless Starter Warehouse
   kaggle_dataset:
     description: Kaggle dataset slug (owner/dataset)
     default: jtrotman/formula-1-race-data
@@ -52,23 +52,32 @@ targets:
     default: true
     mode: development
     workspace:
-      host: https://fe-sandbox-flobricksaws.cloud.databricks.com
-      profile: fe-sandbox-flobricksaws
+      host: https://dbc-ff1706da-b140.cloud.databricks.com
+      profile: f1genie-dev
     variables:
       # fe-sandbox-flobricksaws has the usage policy preview enabled -> Genie volume indexing unavailable
       genie_document_volumes: "[]"
       # Same prefix development mode puts on the job and pipeline names
       genie_title: "[dev ${workspace.current_user.short_name}] Formula 1 Race Analytics"
 
-  prod:
-    mode: production
-    workspace:
-      host: https://fe-sandbox-flobricksaws.cloud.databricks.com
-      profile: fe-sandbox-flobricksaws
-      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
-    variables:
-      # fe-sandbox-flobricksaws has the usage policy preview enabled -> Genie volume indexing unavailable
-      genie_document_volumes: "[]"
-    permissions:
-      - user_name: ${workspace.current_user.userName}
-        level: CAN_MANAGE
+  # Production target, disabled while there is only one workspace. To enable it, uncomment the block and:
+  #   - set host to the production workspace URL and create a CLI profile for it:
+  #       databricks auth login --host <prod-host> --profile f1genie-prod
+  #   - make sure the catalog (var.catalog) and the SQL warehouse (var.warehouse_id) exist there,
+  #     e.g. override warehouse_id under variables below
+  #   - drop the genie_document_volumes override unless that workspace has the usage policy preview
+  #     (Genie volume indexing unavailable)
+  #   - deploy with: databricks bundle deploy -t prod
+  # Production mode keeps the monthly schedule active and drops the dev_<user>_ / [dev <user>] prefixes.
+  # prod:
+  #   mode: production
+  #   workspace:
+  #     host: https://<prod-workspace>.cloud.databricks.com
+  #     profile: f1genie-prod
+  #     root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+  #   variables:
+  #     # warehouse_id: <prod-warehouse-id>
+  #     genie_document_volumes: "[]"
+  #   permissions:
+  #     - user_name: ${workspace.current_user.userName}
+  #       level: CAN_MANAGE
