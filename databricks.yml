@@ -69,15 +69,15 @@ targets:
   #     (Genie volume indexing unavailable)
   #   - deploy with: databricks bundle deploy -t prod
   # Production mode keeps the monthly schedule active and drops the dev_<user>_ / [dev <user>] prefixes.
-  # prod:
-  #   mode: production
-  #   workspace:
-  #     host: https://<prod-workspace>.cloud.databricks.com
-  #     profile: f1genie-prod
-  #     root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
-  #   variables:
-  #     # warehouse_id: <prod-warehouse-id>
-  #     genie_document_volumes: "[]"
-  #   permissions:
-  #     - user_name: ${workspace.current_user.userName}
-  #       level: CAN_MANAGE
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-ff1706da-b140.cloud.databricks.com
+      profile: f1genie-dev # same workspace as dev
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      # warehouse_id: <prod-warehouse-id>
+      genie_document_volumes: "[]"
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE
